@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Estratégias</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Curso-R" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="custom.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Estratégias
+### Curso-R
+
+---
+
+
+
+# Vamos falar de
+
+- Viés e variância
+
+- Erro de treino e erro de teste
+
+- Validação cruzada
+
+---
+
+
+---
+
+# Como estimamos f?
+
+Para estimar `\(f\)`, coletamos um conjunto de pares `\((X, Y)\)` e usamos algum algoritmo para encontrar uma `\(f\)` tal que `\(Y \approx f(X)\)`.
+
+Os modelos são geralmente dividios em duas classes:
+
+* Paramétricos
+* Não paramétricos
+
+---
+
+## Paramétricos
+
+Assumem uma forma funcional para `\(f\)` e depois estimam parâmetros. 
+
+--
+
+Podemos assumir que `\(f\)` possui a forma funcional linear:
+
+`$$f(X) = \beta_1*X_1 + \beta_2*X_2 + ... + \beta_p*X_p$$`
+
+Então utilizamos os dados para encontrar valores `\(\hat{\beta_1}, \hat{\beta_2}, ..., \hat{\beta_p}\)` tal que:
+
+`$$Y \approx \hat{\beta_1}*X_1 + \hat{\beta_2}*X_2 + ... + \hat{\beta_p}*X_p$$`
+---
+
+## Paramétricos
+
+Chamamos de paramétricos pois reduzimos o problema de estimar `\(f\)` para o problema de estimar um conjunto de parâmetros `\(\beta\)`.
+
+--
+
+**Desvantagens**:
+
+- geralmente a forma funcional que escolhemos para `\(f\)` não é a forma forma funcional da verdadeira `\(f\)`.
+- se aumentarmos muito o número de parâmetros, podemos gerar *overfitting*.
+
+**Vantagens**:
+
+- em geral, é computacionalmente mais eficiente
+- em geral, precisa de menos observações
+
+
+---
+
+## Não-paramétricos
+
+Não fazem suposições explícitas sobre a forma funcional de `\(f\)`. Estimam uma `\(f\)` que fica o mais próximo possível das obervações segundo alguma regra bem definida.
+
+![](https://freakonometrics.hypotheses.org/files/2015/06/boosting-algo-3.gif)
+
+---
+
+## Não paramétricos
+
+**Vantagens**
+
+* A principal vantagem sobre os modelos paramétricos é que por não fazerem suposiçõe sobre a forma de `\(f\)` podem se ajustar bem á diversas formas possíveis de `\(f\)`. 
+
+**Desvantagens**
+
+* Em geral precisa de mais observações para ficar bem ajustado.
+* Pode ser computacionalmente mais custoso.
+
+---
+
+# Flexibilidade ou Interpretabilidade?
+
+![](https://user-images.githubusercontent.com/4706822/47456108-01d5c880-d7aa-11e8-899a-74804f74afc5.png)
+
+---
+
+# Regressão e Classificação
+
+Existem dois principais tipos de problemas em Machine Learning:
+
+* Regressão
+* Classificação
+
+A principal razão para fazermos essa distinção é a escolha da métrica de performance.
+
+---
+
+# Estimando a performance
+
+Para problemas de regressão:
+
+* `\(R^2\)`
+* Raíz do erro quadrático médio (RMSE)
+
+`$$RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^n \big(y_i - \hat{f}(x_i)\big)^2}$$`
+
+---
+
+# Estimando a performance
+
+Para problemas de classificação:
+
+- Acurácia
+- Área sobre a curva ROC.
+- KS
+- Sensibilidade: Taxa de verdadeiros positivos.
+- Especificidade: Taxa de verdadeiros negativos. 
+
+
+---
+
+# Estimando a performance
+
+Essas medidas poderiam calculadas na base de dados que usamos para ajustar o modelo, chamada de *base de treino*. 
+
+Por que isso seria um problema?
+
+
+&lt;br&gt;
+
+&gt; Estamos interessados nas métricas de erro/acerto para observações que não foram vistas durante o treino.
+
+&lt;br&gt;
+
+**Exemplo**: Se fazemos um modelo para prever o valor de ações no mercado. Não estamos interessados no quanto acertamos para os últimos 6 meses. Estamos interessados em acertar o valor da ação amanhã, ou no próximo mês.
+
+---
+
+# Estimando a performance
+
+Considere que treinamos um modelo com uma base de dados:
+
+`$${(x_1, y_1), (x_2, y_2), ... ,(x_x, y_n)}$$`
+
+Ajustando um modelo, obtemos uma `\(\hat{f}\)` tal que `\(y_1 \approx \hat{f}(x_1)\)`, `\(y_2 \approx \hat{f}(x_2)\)`, ..., `\(y_n \approx \hat{f}(x_n)\)`.
+
+Em vez de calcular, por exemplo, o MSE na base de treino
+
+`$$RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^n \big(y_i - \hat{f}(x_i)\big)^2}$$`
+
+queremos na verdade calcular o MSE em uma base de novas observações
+
+`$$RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^n \big(y_i^0 - \hat{f}(x_i^0)\big)^2}$$`
+em que `\((x_0 , y_0)\)` é o conjunto de novas observações, chamada base de teste.
+
+---
+
+## Como estimamos o MSE para novas observações?
+
+Nem sempre temos acesso a uma nova base de dados...
+
+--
+
+Podemos separar uma parte da base disponível que não será utilizada para ajustar o modelo.
+
+---
+
+# Estimando a performance do modelo
+
+- **Erro de treino**: é o erro encontrado ao aplicar o modelo na própria base utilizada para treiná-lo.
+
+- **Erro de teste**: é o erro encontrado ao aplicar o modelo a uma base não utilizada no treino.
+
+---
+
+# Separação da base
+
+- **base de treino**: observações utilizadas para estimar os parâmetros do modelo e determinar os parâmetros de complexidade (hiperparâmetros)
+
+- **base de teste**: observações utilizadas para estimar o erro de teste. Essas observações não devem ser usadas para treinar o modelo.
+
+--
+
+- Muitas observações na base de treino vão levar a estimativas mais precisas para os parâmetros, mas não teremos uma boa estimativa da performance do modelo.
+
+- Muitas observações na base de teste não vão permitir termos boas estimativas dos parâmetros.
+
+---
+
+# Viés e variância
+
+&lt;img src="https://cdn-images-1.medium.com/max/1600/1*v63L_h5WXGOb4o6oh_daAA.jpeg"&gt;
+
+---
+
+# Hiperparâmetros
+
+Hiperparâmetros são parâmetros do ligados à complexidade do modelo que devem ser escolhidos antes ajuste.
+
+Por exemplo, considere um modelo polinomial:
+
+`$$f(X) = \beta_0  + \beta_1 * X + \beta_2 * X^2 + \beta_3 * X^3 + \cdots + \beta_{p} * X^{p}$$`
+
+Para selecioná-los, podemos utilizar **validação cruzada**.
+
+--
+
+**Validação cruzada**: método para estimar o erro preditivo de um modelo utilizando reamostragem.
+
+--
+
+- Leave-one-out cross-validation (LOOCV)
+- K-fold cross-validation
+
+---
+
+# LOOCV
+
+
+```r
+knitr::include_graphics("img/loocv.png")
+```
+
+&lt;img src="img/loocv.png" width="644" /&gt;
+
+---
+
+# k-fold
+
+
+```r
+knitr::include_graphics("img/k-fold-cv.png")
+```
+
+&lt;img src="img/k-fold-cv.png" width="609" /&gt;
+
+---
+
+# Atenção especial quando o tempo está envolvido.
+
+![](http://topepo.github.io/caret/splitting/Split_time-1.svg)
+---
+
+# Exemplo no R
+
+&lt;img src="https://media.giphy.com/media/o0vwzuFwCGAFO/giphy.gif" style = "display: block; margin-left: auto; margin-right: auto;"&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
