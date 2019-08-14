@@ -14,14 +14,21 @@ Classificação: queremos prever uma variável categórica
 
 O que muda?
 
-- Estimação
-- Métrica de performance
+- Modelo
+- Estimação (função de perda)
+- Métrica
 
 # Regressão logística
 
 Seja Y uma variável que pode assumir duas categorias.
 
 Por exemplo: Y = 1 (bom cliente), Y = 0 (mau cliente)
+
+Antes, estávamos modelando
+
+$$
+E(Y|X)
+$$
 
 O que queremos é modelar 
 
@@ -48,6 +55,17 @@ Vamos usar então
 $$
 f(x) = \frac{1}{1 + e^{-( \beta_0 +  \beta_1*x_1 + \beta_2*x_2 + ... + \beta_p * x_p)}}
 $$
+
+```{r}
+f <- function(x) 1/(1 + exp(-x))
+tibble(
+  x = seq(-10, 10, 0.1),
+  y = f(x)
+) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  theme_minimal()
+```
 
 Equivalentemente
 
@@ -90,16 +108,18 @@ $$
 L(y, f(x)) = - \prod_{i:Y_i = 1} f(x_i) \prod_{i:Y_i = 0} (1 - f(x_i)))
 $$
 
-Previsões: probabilidade estimada de P(Y = 1|X). Precisamos definir então quando escolhemos Y = 1 e Y = 0.
+Previsões: probabilidade estimada de P(Y = 1|X). 
+Precisamos definir então quando escolhemos Y = 1 e Y = 0.
 
 # Pacotes
 
 ```{r}
-library(dplyr)
+# install.packages("rsample")
+
+library(tidyverse)
 library(recipes)
 library(caret)
 library(rsample)
-# install.packages("rsample")
 library(skimr)
 ```
 
@@ -132,23 +152,20 @@ modelo <- train(
   receita, 
   credit_data, 
   method = "glm", 
-  family = "binomial", 
-  trControl = trainControl(method = "cv", number = 5)
+  family = "binomial"
 )
 
 modelo
 varImp(modelo)
 ```
 
-# Outras métricas
+# Avaliando o modelo
 
 ```{r}
 credit_data %>% 
   mutate(pred = predict(modelo, credit_data)) %>% 
-  select(Status, pred) %>% 
-  table
+  count(Status, pred) 
 ```
-
 
 - sensibilidade: taxa de *true positives", entre os bons clientes, quantos foram previstos como bons clientes.
 
@@ -156,59 +173,24 @@ credit_data %>%
 
 - curva ROC
 
-```{r}
-metricas <- function(data, lev = NULL, model = NULL) {
-  c(
-    defaultSummary(data, lev, model), 
-    twoClassSummary(data, lev, model)
-  )
-}
-
-train_control <- trainControl(
-  method = "cv", 
-  number = 5, 
-  classProbs = TRUE,
-  summaryFunction = metricas,
-  savePredictions = TRUE
-)
-```
-
-Ajustando novamente o modelo
 
 ```{r}
-modelo <- train(
-  receita, 
-  credit_data, 
-  method = "glm", 
-  family = "binomial", 
-  trControl = train_control
-)
+# Sensibilidade
+2930/(2930+270)
 
-modelo
-```
+# Especificidade
+605/(605+649)
 
-```{r}
-credit_data <- credit_data %>% 
-  mutate(Status = forcats::lvls_reorder(Status, c(2, 1)))
-
-modelo <- train(
-  receita, 
-  credit_data, 
-  method = "glm", 
-  family = "binomial", 
-  trControl = train_control
-)
-
-modelo
-```
-
-Plotando a curva ROC
-
-```{r}
+# Curva ROC
 library(pROC)
 
-plot.roc(modelo$pred$obs, modelo$pre$good, legacy.axes = TRUE)
-modelo$pred$good
+tibble(
+  obs = credit_data$Status,
+  prob_predita = modelo$finalModel$fitted.values,
+  class_predita = ifelse(prob_predita >= 0.5, "good", "bad")
+) %>% View()
+
+plot.roc(credit_data$Status, modelo$finalModel$fitted.values, legacy.axes = TRUE)
 ```
 
 # Exercício

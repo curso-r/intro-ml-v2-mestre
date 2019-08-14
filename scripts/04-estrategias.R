@@ -1,10 +1,7 @@
-library(tidyverse)
-set.seed(1313)
-
 # Criando banco de dados --------------------------------------------------
 
 criar_amostra <- function(n, perc_treino) {
-  data_frame(
+  tibble(
     x = runif(n, 0, 20),
     y = 500 + 0.4 * (x-10)^3 + rnorm(n, sd = 50),
     is_train = 1:n %in% sample.int(n, n*perc_treino)
@@ -23,7 +20,6 @@ ggplot(df, aes(x = x, y = y, color = is_train)) +
 # Ajustando o primeiro modelo ---------------------------------------------
 
 modelo <- lm(y ~ x, data = df_train)
-summary(modelo)
 
 df$predicao <- predict(modelo, df)
 df %>% 
@@ -75,7 +71,7 @@ ggplot(erros, aes(x = grau, y = mse)) +
   geom_point(
     data = erros %>% group_by(is_train) %>% filter(mse == min(mse)),
     size = 3
-    ) +
+  ) +
   facet_wrap(~is_train) 
 
 
@@ -94,11 +90,11 @@ for(i in 1:n_vezes) {
       color = "red",
       method = "lm", se = FALSE, 
       formula = y ~ poly(x, 20, raw = TRUE)
-      )
+    )
 }
 
 gg + coord_cartesian(ylim = c(0, 1000))
-  
+
 
 # Qual o efeito do tamanho da amostra? -------------------------------------
 
@@ -146,7 +142,7 @@ erros2 <- erros %>%
     maximo = max(mse),
     quantil95 = quantile(mse, probs = 0.95),
     quantil5 = quantile(mse, probs = 0.05)
-    )
+  )
 
 ggplot(erros2, aes(x = grau, y = media)) + 
   geom_line() + 
